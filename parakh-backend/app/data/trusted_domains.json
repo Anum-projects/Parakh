@@ -1,0 +1,16 @@
+{
+  "_note": "Starter list. Verify every domain against the organization's real website before relying on it, and extend it as the team finds more.",
+  "organizations": [
+    {"name": "Higher Education Commission (HEC)", "keywords": ["hec"], "names": ["Higher Education Commission", "HEC"], "domains": ["hec.gov.pk"]},
+    {"name": "Benazir Income Support Programme (BISP)", "keywords": ["bisp", "benazir"], "names": ["Benazir Income Support", "BISP", "Ehsaas"], "domains": ["bisp.gov.pk"]},
+    {"name": "NADRA", "keywords": ["nadra"], "names": ["NADRA"], "domains": ["nadra.gov.pk"]},
+    {"name": "Federal Board of Revenue (FBR)", "keywords": ["fbr"], "names": ["Federal Board of Revenue", "FBR"], "domains": ["fbr.gov.pk"]},
+    {"name": "Prime Minister's Youth Programme", "keywords": ["pmyp"], "names": ["Prime Minister's Youth Programme", "PMYP"], "domains": ["pmyp.gov.pk"]},
+    {"name": "Inter Board Committee of Chairmen (IBCC)", "keywords": ["ibcc"], "names": ["IBCC", "Inter Board Committee"], "domains": ["ibcc.edu.pk"]},
+    {"name": "Government of Punjab", "keywords": [], "names": ["Government of Punjab"], "domains": ["punjab.gov.pk"]},
+    {"name": "Government of Khyber Pakhtunkhwa", "keywords": [], "names": ["Government of Khyber Pakhtunkhwa"], "domains": ["kp.gov.pk"]},
+    {"name": "Government of Sindh", "keywords": [], "names": ["Government of Sindh"], "domains": ["sindh.gov.pk"]},
+    {"name": "Government of Pakistan", "keywords": [], "names": ["Government of Pakistan"], "domains": ["pakistan.gov.pk"]},
+    {"name": "Riphah International University", "keywords": ["riphah"], "names": ["Riphah International University"], "domains": ["riphah.edu.pk"]}
+  ]
+}

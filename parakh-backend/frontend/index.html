@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parakh - Link Verification</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>body{font-family:Inter,Arial,sans-serif}.ltr{direction:ltr;unicode-bidi:isolate}</style>
+</head>
+<body class="bg-[#f5f8ff] min-h-screen text-gray-900">
+
+<header class="max-w-6xl mx-auto p-4 flex justify-between items-center">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl">P</div>
+    <div>
+      <h1 class="font-bold text-xl leading-none">Parakh</h1>
+      <p class="text-[11px] text-gray-500">Verify a link before you trust it</p>
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <label for="langSelect" class="text-xs text-gray-500">Result language</label>
+    <select id="langSelect" class="text-xs bg-white border px-3 py-1 rounded-full">
+      <option value="en">English</option>
+      <option value="ur">اردو</option>
+    </select>
+  </div>
+</header>
+
+<main id="homeScreen" class="max-w-3xl mx-auto mt-12 px-6 text-center">
+  <h2 class="text-3xl md:text-5xl font-bold text-gray-900">
+    Har Link Par Bharosa<br>
+    <span class="text-blue-600">Karne Se Pehle Parakh Lain</span>
+  </h2>
+  <p class="text-gray-500 mt-4">Check suspicious scholarship, government scheme, or prize links.</p>
+
+  <div class="bg-white mt-8 p-5 md:p-8 rounded-[24px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border text-left">
+    <label for="urlInput" class="text-sm font-semibold text-gray-700">🔗 Paste Link Here</label>
+    <div class="flex flex-col md:flex-row gap-3 mt-3">
+      <input id="urlInput" type="text" autocomplete="off"
+        class="flex-1 p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="https://example.com">
+      <button id="analyzeBtn" type="button"
+        class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-8 py-4 rounded-xl font-bold whitespace-nowrap">
+        Analyze
+      </button>
+    </div>
+    <p id="inputError" class="hidden text-red-600 text-sm mt-3" role="alert"></p>
+
+    <div class="flex flex-wrap gap-2 mt-4 text-[11px] text-gray-400">
+      <span>Try:</span>
+      <button type="button" data-example="https://free-hec-scholarship-apply.xyz/register" class="underline">Fake HEC domain</button>
+      <button type="button" data-example="http://bit.ly/hec-free-scholarship-register" class="underline">Shortened link</button>
+      <button type="button" data-example="https://www.hec.gov.pk" class="underline">Official site</button>
+    </div>
+  </div>
+
+  <p class="text-xs text-gray-400 mt-5">
+    Parakh gives a risk assessment from available signals (URL, domain, SSL, page content). Never enter passwords, OTPs or bank details here.
+  </p>
+</main>
+
+<div id="loadingScreen" class="hidden max-w-3xl mx-auto mt-20 px-6">
+  <div class="bg-white p-8 rounded-[24px] border text-center">
+    <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+    <h3 class="font-bold text-xl mt-6">Link Analysis in Progress...</h3>
+    <p class="text-xs text-gray-400 mt-1">This can take up to 20 seconds.</p>
+    <div id="stepList" class="mt-6 text-left max-w-sm mx-auto space-y-3 text-sm"></div>
+  </div>
+</div>
+
+<div id="resultScreen" class="hidden max-w-3xl mx-auto px-6 pb-20 mt-8">
+  <div class="bg-white rounded-[24px] shadow-lg border overflow-hidden">
+    <div id="riskBox" class="p-6 md:p-8">
+      <div class="flex justify-between items-start gap-4">
+        <div class="min-w-0">
+          <span id="riskBadge" class="inline-block px-4 py-1.5 rounded-full text-xs font-bold"></span>
+          <h2 id="riskTitle" class="text-2xl font-bold mt-3"></h2>
+          <p id="riskLink" class="ltr text-sm opacity-90 mt-1 break-all"></p>
+          <p id="finalLink" class="ltr text-xs opacity-90 mt-1 break-all hidden"></p>
+        </div>
+        <div id="riskIcon" class="text-4xl"></div>
+      </div>
+      <div class="mt-5 flex flex-wrap items-center gap-4 text-sm">
+        <div class="flex-1 min-w-[180px]">
+          <div class="flex justify-between text-xs mb-1"><span id="lblScore"></span><span id="scoreVal" class="font-bold"></span></div>
+          <div class="h-2 bg-white/30 rounded-full overflow-hidden"><div id="scoreBar" class="h-2 bg-white rounded-full" style="width:0%"></div></div>
+        </div>
+        <div class="bg-white/20 px-3 py-1 rounded-full text-xs font-semibold"><span id="lblConf"></span>: <span id="confVal"></span></div>
+      </div>
+    </div>
+
+    <div id="resultBody" class="p-6">
+      <h4 id="hReasons" class="font-bold mb-3"></h4>
+      <div id="reasonList" class="grid grid-cols-1 gap-3"></div>
+
+      <div id="positivesWrap" class="hidden">
+        <h4 id="hPositives" class="font-bold mt-6 mb-3"></h4>
+        <div id="positiveList" class="grid grid-cols-1 gap-3"></div>
+      </div>
+
+      <div class="mt-6 p-5 rounded-xl bg-blue-50 border border-blue-100">
+        <h4 id="hExplain" class="font-bold text-blue-900"></h4>
+        <p id="aiExp" class="text-sm text-gray-700 mt-2 leading-7"></p>
+        <p id="expSource" class="text-[11px] text-gray-400 mt-2"></p>
+      </div>
+
+      <div class="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 flex gap-3">
+        <span class="text-xl">⚠️</span>
+        <div>
+          <p id="hRec" class="font-bold text-amber-900 text-sm"></p>
+          <p id="recText" class="text-sm text-amber-800 mt-1"></p>
+        </div>
+      </div>
+
+      <details class="mt-4 border rounded-xl p-4">
+        <summary id="hTech" class="font-bold text-sm cursor-pointer"></summary>
+        <dl id="techList" class="ltr mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-xs"></dl>
+      </details>
+
+      <p id="disclaimer" class="text-[11px] text-gray-500 mt-5 leading-5"></p>
+
+      <button id="resetBtn" type="button" class="w-full mt-6 p-3 bg-gray-900 hover:bg-black text-white rounded-xl"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- Config -------------------------------------------------------------
+// Served by the backend (http://localhost:8000) -> same origin, no CORS needed.
+// Opened from Live Server / file:// -> call the backend explicitly.
+const API_BASE = (location.protocol.startsWith("http") && location.port === "8000") ? "" : "http://localhost:8000";
+const TIMEOUT_MS = 35000;
+
+const $ = (id) => document.getElementById(id);
+
+const I18N = {
+  en: {
+    dir: "ltr", score: "Risk score", conf: "Confidence",
+    reasons: "🔍 Why this link looks risky", noReasons: "No specific warning signs were found.",
+    positives: "✅ Reassuring signs", explain: "🤖 Parakh Explanation", rec: "Recommendation",
+    tech: "Technical details", reset: "Check Another Link", finalUrl: "Ends up at: ",
+    srcGrok: "Explanation written by AI (Grok).", srcFallback: "Explanation generated from the checks above.",
+    risk: { low_risk: "LOW RISK", suspicious: "SUSPICIOUS", high_risk: "HIGH RISK" },
+    title: { low_risk: "No Strong Warning Signs Found", suspicious: "Caution Required", high_risk: "Multiple Warning Signs" },
+    confLabel: { high: "High", medium: "Medium", low: "Low (verify further)" },
+    na: "Not available"
+  },
+  ur: {
+    dir: "rtl", score: "خطرے کا اسکور", conf: "اعتماد کی سطح",
+    reasons: "🔍 یہ لنک خطرناک کیوں لگتا ہے", noReasons: "کوئی خاص انتباہی علامت نہیں ملی۔",
+    positives: "✅ تسلی بخش علامات", explain: "🤖 پرکھ کی وضاحت", rec: "سفارش",
+    tech: "تکنیکی تفصیلات", reset: "دوسرا لنک چیک کریں", finalUrl: "آخر میں یہاں پہنچتا ہے: ",
+    srcGrok: "وضاحت AI (Grok) نے لکھی۔", srcFallback: "وضاحت اوپر کی جانچ سے تیار کی گئی۔",
+    risk: { low_risk: "کم خطرہ", suspicious: "مشکوک", high_risk: "زیادہ خطرہ" },
+    title: { low_risk: "کوئی واضح انتباہی علامت نہیں ملی", suspicious: "احتیاط ضروری ہے", high_risk: "متعدد انتباہی علامات" },
+    confLabel: { high: "زیادہ", medium: "درمیانی", low: "کم (مزید تصدیق کریں)" },
+    na: "دستیاب نہیں"
+  }
+};
+
+const RISK_STYLE = {
+  low_risk:   { box: "from-emerald-500 to-green-600", text: "text-green-700",  icon: "ℹ️" },
+  suspicious: { box: "from-amber-400 to-orange-500",  text: "text-orange-700", icon: "⚠️" },
+  high_risk:  { box: "from-red-600 to-red-700",       text: "text-red-700",    icon: "🚨" }
+};
+const SEV_STYLE = {
+  high:   "bg-red-50 border-red-100 text-red-800",
+  medium: "bg-yellow-50 border-yellow-100 text-yellow-800",
+  low:    "bg-gray-50 border-gray-200 text-gray-700"
+};
+const POS_STYLE = "bg-green-50 border-green-100 text-green-800";
+
+const STEPS = [
+  "Checking URL format and structure...",
+  "Looking up domain information...",
+  "Checking SSL certificate...",
+  "Following redirects and reading the page...",
+  "Comparing with official sources...",
+  "Calculating risk and writing explanation..."
+];
+
+let stepTimer = null;
+let busy = false;
+
+// ---- UI helpers (textContent only: never innerHTML with server data) ----
+function show(id) { $(id).classList.remove("hidden"); }
+function hide(id) { $(id).classList.add("hidden"); }
+
+function showInputError(msg) { $("inputError").textContent = msg; show("inputError"); }
+
+function startSteps() {
+  const list = $("stepList");
+  list.textContent = "";
+  let i = 0;
+  const add = () => {
+    if (i >= STEPS.length) return;
+    const row = document.createElement("div");
+    row.className = "flex gap-2";
+    const mark = document.createElement("span");
+    mark.className = "text-blue-600";
+    mark.textContent = "•";
+    const txt = document.createElement("span");
+    txt.textContent = STEPS[i++];
+    row.append(mark, txt);
+    list.appendChild(row);
+  };
+  add();
+  stepTimer = setInterval(add, 2500);
+}
+function stopSteps() { clearInterval(stepTimer); stepTimer = null; }
+
+function makeCard(text, cls) {
+  const d = document.createElement("div");
+  d.className = "p-4 rounded-xl border text-sm " + cls;
+  d.textContent = text;
+  return d;
+}
+
+function fillList(containerId, items, cls) {
+  const c = $(containerId);
+  c.textContent = "";
+  items.forEach((it) => c.appendChild(makeCard(it.text, cls(it))));
+}
+
+// ---- API ----------------------------------------------------------------
+async function checkLink(url, lang) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(API_BASE + "/api/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, lang }),
+      signal: ctrl.signal
+    });
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+    if (!res.ok) {
+      let msg;
+      if (data && typeof data.detail === "string") msg = data.detail;
+      else if (res.status === 422) msg = "Please enter a valid link.";
+      else if (res.status === 429) msg = "Too many requests. Please wait a minute and try again.";
+      else msg = "Something went wrong. Please try again.";
+      throw new Error(msg);
+    }
+    return data;
+  } catch (e) {
+    if (e.name === "AbortError") throw new Error("The check took too long. Please try again.");
+    if (e instanceof TypeError) throw new Error("Cannot reach the Parakh server. Make sure the backend is running (uvicorn on port 8000).");
+    throw e;
+  } finally { clearTimeout(t); }
+}
+
+async function startAnalysis() {
+  if (busy) return;
+  const url = $("urlInput").value.trim();
+  hide("inputError");
+  if (!url) { showInputError("Please enter a link."); return; }
+
+  busy = true;
+  $("analyzeBtn").disabled = true;
+  hide("homeScreen"); hide("resultScreen"); show("loadingScreen");
+  startSteps();
+
+  try {
+    const data = await checkLink(url, $("langSelect").value);
+    renderResult(data, $("langSelect").value);
+    hide("loadingScreen"); show("resultScreen");
+  } catch (e) {
+    hide("loadingScreen"); show("homeScreen");
+    showInputError(e.message);
+  } finally {
+    stopSteps();
+    busy = false;
+    $("analyzeBtn").disabled = false;
+  }
+}
+
+// ---- Rendering ----------------------------------------------------------
+function renderResult(d, lang) {
+  const t = I18N[lang] || I18N.en;
+  const st = RISK_STYLE[d.risk_level] || RISK_STYLE.suspicious;
+
+  $("resultBody").setAttribute("dir", t.dir);
+  $("riskBox").setAttribute("dir", t.dir);
+
+  $("riskBox").className = "p-6 md:p-8 bg-gradient-to-br text-white " + st.box;
+  $("riskBadge").className = "inline-block px-4 py-1.5 rounded-full text-xs font-bold bg-white " + st.text;
+  $("riskBadge").textContent = t.risk[d.risk_level] || d.risk_level;
+  $("riskTitle").textContent = t.title[d.risk_level] || "";
+  $("riskIcon").textContent = st.icon;
+  $("riskLink").textContent = d.input_url;
+
+  if (d.final_url && d.final_url !== d.input_url) {
+    $("finalLink").textContent = t.finalUrl + d.final_url;
+    show("finalLink");
+  } else { hide("finalLink"); }
+
+  const score = Math.max(0, Math.min(100, Number(d.score) || 0));
+  $("lblScore").textContent = t.score;
+  $("scoreVal").textContent = score + " / 100";
+  $("scoreBar").style.width = score + "%";
+  $("lblConf").textContent = t.conf;
+  $("confVal").textContent = t.confLabel[d.confidence] || d.confidence;
+
+  $("hReasons").textContent = t.reasons;
+  const reasons = d.reasons && d.reasons.length ? d.reasons : [{ text: t.noReasons, severity: "low" }];
+  fillList("reasonList", reasons, (r) => SEV_STYLE[r.severity] || SEV_STYLE.low);
+
+  if (d.positives && d.positives.length) {
+    $("hPositives").textContent = t.positives;
+    fillList("positiveList", d.positives, () => POS_STYLE);
+    show("positivesWrap");
+  } else { hide("positivesWrap"); }
+
+  $("hExplain").textContent = t.explain;
+  $("aiExp").textContent = d.explanation;
+  $("expSource").textContent = d.explanation_source === "grok" ? t.srcGrok : t.srcFallback;
+  $("hRec").textContent = t.rec;
+  $("recText").textContent = d.recommendation;
+
+  $("hTech").textContent = t.tech;
+  const dl = $("techList");
+  dl.textContent = "";
+  Object.entries(d.signals || {}).forEach(([k, v]) => {
+    const row = document.createElement("div");
+    row.className = "flex justify-between gap-3 border-b border-gray-100 py-1";
+    const dt = document.createElement("dt");
+    dt.className = "text-gray-500";
+    dt.textContent = k.replace(/_/g, " ");
+    const dd = document.createElement("dd");
+    dd.className = "font-semibold text-right break-all";
+    dd.textContent = (v === null || v === undefined) ? t.na : (typeof v === "object" ? JSON.stringify(v) : String(v));
+    row.append(dt, dd);
+    dl.appendChild(row);
+  });
+
+  $("disclaimer").textContent = d.disclaimer;
+  $("resetBtn").textContent = t.reset;
+}
+
+function resetApp() {
+  $("urlInput").value = "";
+  hide("inputError"); hide("resultScreen"); hide("loadingScreen"); show("homeScreen");
+  $("urlInput").focus();
+}
+
+// ---- Events -------------------------------------------------------------
+$("analyzeBtn").addEventListener("click", startAnalysis);
+$("resetBtn").addEventListener("click", resetApp);
+$("urlInput").addEventListener("keydown", (e) => { if (e.key === "Enter") startAnalysis(); });
+document.querySelectorAll("[data-example]").forEach((b) =>
+  b.addEventListener("click", () => { $("urlInput").value = b.dataset.example; hide("inputError"); })
+);
+</script>
+</body>
+</html>
